@@ -4,6 +4,7 @@ package com.simplyautomatic.slack.status
 import com.slack.api.Slack
 import com.slack.api.model.User.Profile
 import com.slack.api.methods.request.users.profile.UsersProfileSetRequest
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -12,15 +13,22 @@ import kotlin.system.exitProcess
 
 @SpringBootApplication
 class SlackStatusSetterApplication : ApplicationRunner {
+
+	@Value("\${SLACK_API_TOKEN:}")
+	val slackApiTokenFromEnv: String? = null
+
 	override fun run(args: ApplicationArguments?) {
-		val slackApiToken = args?.getOptionValues("token")?.first()
-		val statusText = args?.getOptionValues("text")?.first()
-		val statusEmoji = args?.getOptionValues("emoji")?.first()
+		// Get Slack API token from arg or env
+		val slackApiToken = args?.getOptionValues("token")?.first() ?: slackApiTokenFromEnv
 
 		if (slackApiToken == null || slackApiToken.isEmpty()) {
 			println("Error: Must provide Slack API token.")
 			exitProcess(1)
 		}
+
+		// Get desired status info
+		val statusText = args?.getOptionValues("text")?.first()
+		val statusEmoji = args?.getOptionValues("emoji")?.first()
 
 		if (statusText == null || statusEmoji == null) {
 			println("Error: Must provide both text and an emoji for status.")
