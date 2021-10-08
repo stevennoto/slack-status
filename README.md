@@ -24,7 +24,8 @@ TODO
 
 - [x] Get token from env or arg
 - [ ] Improve results display
-- [ ] Add mode to display status
+- [x] Add mode to display status
+- [ ] Add mode to clear status (empty strings to status_text and status_emoji)
 - [ ] Add usage info to README
 - [ ] Add usage printing to cli
 - [ ] Add setting of expiration date, with shortcuts like "end of day"
