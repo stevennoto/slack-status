@@ -23,10 +23,9 @@ TODO
 ## TODO
 
 - [x] Get token from env or arg
-- [ ] Improve results display
+- [x] Improve results display
 - [x] Add mode to display status
-- [ ] Add mode to clear status (empty strings to status_text and status_emoji)
-- [ ] Add usage info to README
-- [ ] Add usage printing to cli
+- [x] Add mode to clear status (empty strings to status_text and status_emoji)
+- [ ] Add 'usage' to cli and README
 - [ ] Add setting of expiration date, with shortcuts like "end of day"
 - [ ] Add saving/retrieving template statuses
