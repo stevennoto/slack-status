@@ -16,7 +16,7 @@ import java.util.Date
 import kotlin.system.exitProcess
 
 @SpringBootApplication
-class SlackStatusSetterApplication : ApplicationRunner {
+class SlackStatusApplication : ApplicationRunner {
 
 	@Value("\${SLACK_API_TOKEN:}")
 	val slackApiTokenFromEnv: String? = null
@@ -75,8 +75,10 @@ class SlackStatusSetterApplication : ApplicationRunner {
 	}
 
 	fun printUsage() {
-		// TODO
-		println("Usage: TODO")
+		println("""Slack Status application: get, set, or clear your Slack status!
+			|Set your Slack API user token via environment variable `SLACK_API_TOKEN` or as `--token=<token>`.
+			|Specify `--get-status`, `--set-status`, `--clear-status`, or `--help` for mode.
+			|Specify `--text=<text> --emoji=<emoji>` when setting status.""".trimMargin())
 	}
 
 	fun getSlackClient(apiToken: String?): MethodsClient {
@@ -119,5 +121,5 @@ class SlackStatusSetterApplication : ApplicationRunner {
 }
 
 fun main(args: Array<String>) {
-	runApplication<SlackStatusSetterApplication>(*args)
+	runApplication<SlackStatusApplication>(*args)
 }
