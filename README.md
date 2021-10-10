@@ -29,3 +29,4 @@ TODO
 - [ ] Add 'usage' to cli and README
 - [ ] Add setting of expiration date, with shortcuts like "end of day"
 - [ ] Add saving/retrieving template statuses
+- [ ] Decide whether to keep Spring dependencies
