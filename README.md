@@ -25,7 +25,11 @@ Set your Slack API user token via environment variable `SLACK_API_TOKEN` or as `
 
 Specify `--get-status`, `--set-status`, `--clear-status`, or `--help` for mode.
 
-Specify `--text=<text> --emoji=<emoji>` when setting status.
+Specify `--text='some text' --emoji='emoji-name'` when setting status.
+
+Optionally specify `--expires='some date/time expression'` when setting status.
+[Natty](https://github.com/joestelmach/natty) is used for natural language date parsing, so expressions like 
+"tomorrow morning" or "wednesday at 5pm" will be recognized.
 
 ## TODO
 
@@ -34,6 +38,6 @@ Specify `--text=<text> --emoji=<emoji>` when setting status.
 - [x] Add mode to display status
 - [x] Add mode to clear status (empty strings to status_text and status_emoji)
 - [x] Add 'help'/'usage' to cli and README
-- [ ] Add setting of expiration date, with shortcuts like "end of day"
+- [x] Add setting of expiration date, with shortcuts like "end of day"
 - [ ] Add saving/retrieving template statuses
 - [ ] Decide whether to keep Spring dependencies

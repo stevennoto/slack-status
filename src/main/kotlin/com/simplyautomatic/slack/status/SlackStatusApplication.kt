@@ -1,6 +1,7 @@
 package com.simplyautomatic.slack.status
 
 
+import com.joestelmach.natty.Parser
 import com.slack.api.Slack
 import com.slack.api.methods.MethodsClient
 import com.slack.api.methods.request.users.profile.UsersProfileGetRequest
@@ -41,6 +42,7 @@ class SlackStatusApplication : ApplicationRunner {
 
 					val statusText = args?.getOptionValues("text")?.first()
 					val statusEmoji = args?.getOptionValues("emoji")?.first()
+					val statusExpiration = args?.getOptionValues("expires")?.first()
 
 					if (statusText == null || statusEmoji == null) {
 						throw Exception("Status text and emoji must be provided to set status.")
@@ -49,7 +51,9 @@ class SlackStatusApplication : ApplicationRunner {
 					val statusEmojiQuoted =
 						if (statusEmoji.startsWith(":") && statusEmoji.endsWith(":")) statusEmoji else ":$statusEmoji:"
 
-					val profile = setStatus(slackApiToken, statusText, statusEmojiQuoted)
+					val expirationDate = Parser().parse(statusExpiration ?: "").flatMap { it.dates }.firstOrNull()
+
+					val profile = setStatus(slackApiToken, statusText, statusEmojiQuoted, expirationDate)
 					printStatus(profile)
 				}
 				Mode.CLEAR_STATUS -> {
@@ -78,7 +82,8 @@ class SlackStatusApplication : ApplicationRunner {
 		println("""Slack Status application: get, set, or clear your Slack status!
 			|Set your Slack API user token via environment variable `SLACK_API_TOKEN` or as `--token=<token>`.
 			|Specify `--get-status`, `--set-status`, `--clear-status`, or `--help` for mode.
-			|Specify `--text=<text> --emoji=<emoji>` when setting status.""".trimMargin())
+			|Specify `--text='some text' --emoji='emoji-name'` when setting status.
+			|Optionally specify `--expires='some date/time expression'` when setting status.""".trimMargin())
 	}
 
 	fun getSlackClient(apiToken: String?): MethodsClient {
@@ -97,11 +102,14 @@ class SlackStatusApplication : ApplicationRunner {
 		return response.profile
 	}
 
-	fun setStatus(apiToken: String?, statusText: String, statusEmoji: String): Profile {
+	fun setStatus(apiToken: String?, statusText: String, statusEmoji: String, statusExpiration: Date? = null): Profile {
 		val client = getSlackClient(apiToken)
 		val profile = Profile()
 		profile.statusText = statusText
 		profile.statusEmoji = statusEmoji
+		if (statusExpiration != null) {
+			profile.statusExpiration = statusExpiration.time / 1000
+		}
 		val request = UsersProfileSetRequest.builder().profile(profile).build()
 		val response = client.usersProfileSet(request)
 		if (!response.isOk) throw Exception("Slack API returned error ${response.error ?: response.warning}")

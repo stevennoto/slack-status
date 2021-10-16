@@ -18,6 +18,7 @@ repositories {
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter:2.5.5")
 	implementation("com.slack.api:slack-api-client:1.12.1")
+	implementation("com.joestelmach:natty:0.13")
 }
 
 tasks.withType<KotlinCompile> {
