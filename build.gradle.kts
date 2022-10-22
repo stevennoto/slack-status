@@ -1,10 +1,10 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-	id("org.springframework.boot") version "2.5.5"
-	id("io.spring.dependency-management") version "1.0.11.RELEASE"
-	kotlin("jvm") version "1.5.31"
-	kotlin("plugin.spring") version "1.5.31"
+	id("org.springframework.boot") version "2.7.5"
+	id("io.spring.dependency-management") version "1.1.0"
+	kotlin("jvm") version "1.7.20"
+	kotlin("plugin.spring") version "1.7.20"
 }
 
 group = "com.simplyautomatic"
@@ -16,8 +16,8 @@ repositories {
 }
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter:2.5.5")
-	implementation("com.slack.api:slack-api-client:1.12.1")
+	implementation("org.springframework.boot:spring-boot-starter:2.7.5")
+	implementation("com.slack.api:slack-api-client:1.26.1")
 	implementation("com.joestelmach:natty:0.13")
 }
 
