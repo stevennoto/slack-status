@@ -17,19 +17,33 @@ regenerate tokens. Then copy your "User OAuth Token" from the page.
 
 You can then specify your token in an environment variable named `$SLACK_API_TOKEN` or with a `token` argument.
 
+## Build
+
+To build the app, use Gradle:
+
+    ./gradlew :bootJar
+
+This should build a jar file in the `build/libs` folder.
+
 ## Usage
 
 Run the app with Java, for example, `java -jar slack-status.jar`.
 
 Set your Slack API user token via environment variable `SLACK_API_TOKEN` or as `--token=<token>`.
 
-Specify `--get-status`, `--set-status`, `--clear-status`, or `--help` for mode.
+Specify `--get-status`, `--set-status`, `--clear-status`, or `--help` for mode:
 
-Specify `--text='some text' --emoji='emoji-name'` when setting status.
+    java -jar slack-status.jar --get-status
+
+Specify `--text='some text' --emoji='emoji-name'` when setting status:
+
+    java -jar slack-status.jar --set-status --text='Lunch break' --emoji='sandwich'
 
 Optionally specify `--expires='some date/time expression'` when setting status.
 [Natty](https://github.com/joestelmach/natty) is used for natural language date parsing, so expressions like 
-"tomorrow morning" or "wednesday at 5pm" will be recognized.
+"tomorrow morning" or "wednesday at 5pm" will be recognized:
+
+    java -jar slack-status.jar --set-status --text='Out to lunch' --emoji='sandwich' --expires='1pm'
 
 ## TODO
 
