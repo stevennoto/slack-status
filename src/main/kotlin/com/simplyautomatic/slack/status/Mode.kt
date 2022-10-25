@@ -4,5 +4,6 @@ enum class Mode {
     USAGE,
     GET_STATUS,
     SET_STATUS,
-    CLEAR_STATUS
+    CLEAR_STATUS,
+	GET_CHANNEL_STATS
 }

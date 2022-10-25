@@ -31,19 +31,20 @@ Run the app with Java, for example, `java -jar slack-status.jar`.
 
 Set your Slack API user token via environment variable `SLACK_API_TOKEN` or as `--token=<token>`.
 
-Specify `--get-status`, `--set-status`, `--clear-status`, or `--help` for mode:
+Specify `--get-status`, `--set-status`, `--clear-status`, `--get-channel-stats`, or `--help` for mode:
 
     java -jar slack-status.jar --get-status
 
-Specify `--text='some text' --emoji='emoji-name'` when setting status:
+Specify `--text='some text' --emoji='emoji-name'` when setting status, and optionally `--expires='date/time'`:
 
-    java -jar slack-status.jar --set-status --text='Lunch break' --emoji='sandwich'
+    java -jar slack-status.jar --set-status --text='Lunch break' --emoji='sandwich' --expires='1pm'
 
-Optionally specify `--expires='some date/time expression'` when setting status.
+Specify `--channel-id='Slack channel ID' --start='date/time' --end='date/time'` when getting stats:
+
+    java -jar slack-status.jar --get-channel-stats --channel-id='CXYZ123' --start='January 1, 2022 0:00' --end='January 31, 2022 23:59'
+
 [Natty](https://github.com/joestelmach/natty) is used for natural language date parsing, so expressions like 
-"tomorrow morning" or "wednesday at 5pm" will be recognized:
-
-    java -jar slack-status.jar --set-status --text='Out to lunch' --emoji='sandwich' --expires='1pm'
+"tomorrow morning" or "wednesday at 5pm" will be recognized for date/time arguments.
 
 ## TODO
 
