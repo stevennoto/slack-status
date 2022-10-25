@@ -4,16 +4,17 @@ package com.simplyautomatic.slack.status
 import com.joestelmach.natty.Parser
 import com.slack.api.Slack
 import com.slack.api.methods.MethodsClient
+import com.slack.api.methods.request.conversations.ConversationsHistoryRequest
 import com.slack.api.methods.request.users.profile.UsersProfileGetRequest
-import com.slack.api.model.User.Profile
 import com.slack.api.methods.request.users.profile.UsersProfileSetRequest
+import com.slack.api.model.User.Profile
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import java.text.SimpleDateFormat
-import java.util.Date
+import java.util.*
 import kotlin.system.exitProcess
 
 @SpringBootApplication
@@ -61,6 +62,21 @@ class SlackStatusApplication : ApplicationRunner {
 					setStatus(slackApiToken, "", "")
 					println("Slack status cleared.")
 				}
+				Mode.GET_CHANNEL_STATS -> {
+					println("Getting Slack channel stats...")
+
+					val channelId = args?.getOptionValues("channel-id")?.first()
+					val start = args?.getOptionValues("start")?.first()
+					val end = args?.getOptionValues("end")?.first()
+					val startDate = Parser().parse(start ?: "").flatMap { it.dates }.firstOrNull()
+					val endDate = Parser().parse(end ?: "").flatMap { it.dates }.firstOrNull()
+					if (channelId == null || startDate == null || endDate == null) {
+						throw Exception("Channel and start/end dates must be provided to get stats.")
+					}
+
+					val channelStats = getChannelStats(slackApiToken, channelId, startDate, endDate)
+					printChannelStats(listOf(channelStats))
+				}
 			}
 		} catch (e: Exception) {
 			println("Error: ${e.message}")
@@ -75,19 +91,20 @@ class SlackStatusApplication : ApplicationRunner {
 		if (args.contains("clear-status")) return Mode.CLEAR_STATUS
 		if (args.contains("get-status")) return Mode.GET_STATUS
 		if (args.contains("set-status")) return Mode.SET_STATUS
+		if (args.contains("get-channel-stats")) return Mode.GET_CHANNEL_STATS
 		return Mode.USAGE
 	}
 
 	fun printUsage() {
 		println("""Slack Status application: get, set, or clear your Slack status!
 			|Set your Slack API user token via environment variable `SLACK_API_TOKEN` or as `--token=<token>`.
-			|Specify `--get-status`, `--set-status`, `--clear-status`, or `--help` for mode.
-			|Specify `--text='some text' --emoji='emoji-name'` when setting status.
-			|Optionally specify `--expires='some date/time expression'` when setting status.""".trimMargin())
+			|Specify `--get-status`, `--set-status`, `--clear-status`, `--get-channel-stats`, or `--help` for mode.
+			|Specify `--text='some text' --emoji='emoji-name'` when setting status, and optionally `--expires='date/time'`
+			|Specify `--channel-id='Slack channel ID' --start='date/time' --end='date/time'` when getting stats.""".trimMargin())
 	}
 
 	fun getSlackClient(apiToken: String?): MethodsClient {
-		if (apiToken == null || apiToken.isEmpty()) {
+		if (apiToken.isNullOrEmpty()) {
 			throw Exception("Slack API token not found. Please specify API token by environment variable or argument.")
 		}
 
@@ -124,6 +141,40 @@ class SlackStatusApplication : ApplicationRunner {
 			val expirationDate = Date(profile.statusExpiration * 1000)
 			val expirationDisplay = SimpleDateFormat("yyyy-MM-dd HH:mm").format(expirationDate)
 			println("\tStatus expires: $expirationDisplay")
+		}
+	}
+
+	fun getChannelStats(apiToken: String?, channelId: String, startDate: Date, endDate: Date): MessageStats {
+		val client = getSlackClient(apiToken)
+
+		val request = ConversationsHistoryRequest.builder()
+			.channel(channelId)
+			.oldest((startDate.time / 1000).toString())
+			.latest((endDate.time / 1000).toString())
+			.limit(500)
+			.build()
+		val response = client.conversationsHistory(request)
+		if (!response.isOk) throw Exception("Slack API returned error ${response.error ?: response.warning}")
+
+		val messageStats = MessageStats("$startDate to $endDate")
+		response.messages.forEach {
+			messageStats.numMessages++
+			if (!it.threadTs.isNullOrBlank() && it.subtype != "thread_broadcast") {
+				messageStats.numThreads++
+				messageStats.threadsStats.add(ThreadStats(it.replyCount, it.replyUsers.size))
+			}
+		}
+		return messageStats
+	}
+
+	fun printChannelStats(stats: List<MessageStats>) {
+		println("Period,Num Messages,Num Threads,Min Thread Length,Max Thread Length,Avg Thread Length,Avg Thread Users")
+		stats.forEach {
+			val minThreadLength = it.threadsStats.minOfOrNull { it.numMessages }
+			val maxThreadLength = it.threadsStats.maxOfOrNull { it.numMessages }
+			val avgThreadLength = String.format("%.2f", it.threadsStats.map { it.numMessages }.average())
+			val avgThreadUsers = String.format("%.2f", it.threadsStats.map { it.numUsers }.average())
+			println("${it.periodName},${it.numMessages},${it.numThreads},${minThreadLength},${maxThreadLength},${avgThreadLength},${avgThreadUsers}")
 		}
 	}
 }
