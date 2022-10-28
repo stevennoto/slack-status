@@ -151,19 +151,23 @@ class SlackStatusApplication : ApplicationRunner {
 			.channel(channelId)
 			.oldest((startDate.time / 1000).toString())
 			.latest((endDate.time / 1000).toString())
-			.limit(500)
+			.limit(100)
 			.build()
-		val response = client.conversationsHistory(request)
-		if (!response.isOk) throw Exception("Slack API returned error ${response.error ?: response.warning}")
 
 		val messageStats = MessageStats("$startDate to $endDate")
-		response.messages.forEach {
-			messageStats.numMessages++
-			if (!it.threadTs.isNullOrBlank() && it.subtype != "thread_broadcast") {
-				messageStats.numThreads++
-				messageStats.threadsStats.add(ThreadStats(it.replyCount, it.replyUsers.size))
+		do {
+			val response = client.conversationsHistory(request)
+			if (!response.isOk) throw Exception("Slack API returned error ${response.error ?: response.warning}")
+			request.cursor = response.responseMetadata?.nextCursor // Use cursor to track pagination
+
+			response.messages.forEach {
+				messageStats.numMessages++
+				if (!it.threadTs.isNullOrBlank() && it.subtype != "thread_broadcast") {
+					messageStats.numThreads++
+					messageStats.threadsStats.add(ThreadStats(it.replyCount, it.replyUsers.size))
+				}
 			}
-		}
+		} while (request.cursor?.isNotEmpty() == true)
 		return messageStats
 	}
 
