@@ -14,6 +14,10 @@ import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import java.text.SimpleDateFormat
+import java.time.DayOfWeek
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalAdjusters
 import java.util.*
 import kotlin.system.exitProcess
 
@@ -70,12 +74,17 @@ class SlackStatusApplication : ApplicationRunner {
 					val end = args?.getOptionValues("end")?.first()
 					val startDate = Parser().parse(start ?: "").flatMap { it.dates }.firstOrNull()
 					val endDate = Parser().parse(end ?: "").flatMap { it.dates }.firstOrNull()
+					val splitBy = args?.getOptionValues("split-by")?.first() ?: ""
+					val splitByInterval = Interval.values().firstOrNull { it.name == splitBy.uppercase() }
 					if (channelId == null || startDate == null || endDate == null) {
 						throw Exception("Channel and start/end dates must be provided to get stats.")
 					}
+					if (splitBy.isNotBlank() && splitByInterval == null) {
+						throw Exception("Channel stats can only be split-by 'week' or 'month', not '$splitBy'.")
+					}
 
-					val channelStats = getChannelStats(slackApiToken, channelId, startDate, endDate)
-					printChannelStats(listOf(channelStats))
+					val channelStats = getChannelStats(slackApiToken, channelId, startDate, endDate, splitByInterval)
+					printChannelStats(channelStats)
 				}
 			}
 		} catch (e: Exception) {
@@ -84,6 +93,21 @@ class SlackStatusApplication : ApplicationRunner {
 		}
 
 		exitProcess(0)
+	}
+
+	fun getPrettyIntervalNameFromSlackTimestamp(timestamp: String, interval: Interval): String {
+		val date = Date(timestamp.substringBefore(".").toLong() * 1000)
+		return when (interval) {
+			Interval.WEEK -> {
+				val startOfWeek = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+					.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
+				startOfWeek.format(DateTimeFormatter.ofPattern("'Week of 'YYYY/MM/dd"))
+			}
+
+			Interval.MONTH -> {
+				SimpleDateFormat("'Month of 'YYYY/MM").format(date)
+			}
+		}
 	}
 
 	fun getMode(args: List<String>?): Mode {
@@ -100,7 +124,7 @@ class SlackStatusApplication : ApplicationRunner {
 			|Set your Slack API user token via environment variable `SLACK_API_TOKEN` or as `--token=<token>`.
 			|Specify `--get-status`, `--set-status`, `--clear-status`, `--get-channel-stats`, or `--help` for mode.
 			|Specify `--text='some text' --emoji='emoji-name'` when setting status, and optionally `--expires='date/time'`
-			|Specify `--channel-id='Slack channel ID' --start='date/time' --end='date/time'` when getting stats.""".trimMargin())
+			|Specify `--channel-id='Slack channel ID' --start='date/time' --end='date/time'` when getting stats, and optionally `--split-by='week|month'`.""".trimMargin())
 	}
 
 	fun getSlackClient(apiToken: String?): MethodsClient {
@@ -144,7 +168,7 @@ class SlackStatusApplication : ApplicationRunner {
 		}
 	}
 
-	fun getChannelStats(apiToken: String?, channelId: String, startDate: Date, endDate: Date): MessageStats {
+	fun getChannelStats(apiToken: String?, channelId: String, startDate: Date, endDate: Date, interval: Interval?): List<MessageStats> {
 		val client = getSlackClient(apiToken)
 
 		val request = ConversationsHistoryRequest.builder()
@@ -154,13 +178,25 @@ class SlackStatusApplication : ApplicationRunner {
 			.limit(100)
 			.build()
 
-		val messageStats = MessageStats("$startDate to $endDate")
+		var messageStats = MessageStats(if (interval == null) "$startDate to $endDate" else "")
+		val messagesStatsList = mutableListOf(messageStats)
+
 		do {
 			val response = client.conversationsHistory(request)
 			if (!response.isOk) throw Exception("Slack API returned error ${response.error ?: response.warning}")
 			request.cursor = response.responseMetadata?.nextCursor // Use cursor to track pagination
 
 			response.messages.forEach {
+				// Split by interval if specified
+				if (interval != null) {
+					val messagePeriodName = getPrettyIntervalNameFromSlackTimestamp(it.ts, interval)
+					if (messageStats.periodName.isEmpty()) messageStats.periodName = messagePeriodName
+					if (messageStats.periodName != messagePeriodName) {
+						messageStats = MessageStats(messagePeriodName)
+						messagesStatsList += messageStats
+					}
+				}
+
 				messageStats.numMessages++
 				if (!it.threadTs.isNullOrBlank() && it.subtype != "thread_broadcast") {
 					messageStats.numThreads++
@@ -168,7 +204,10 @@ class SlackStatusApplication : ApplicationRunner {
 				}
 			}
 		} while (request.cursor?.isNotEmpty() == true)
-		return messageStats
+
+		messagesStatsList.sortBy { it.periodName }
+
+		return messagesStatsList
 	}
 
 	fun printChannelStats(stats: List<MessageStats>) {

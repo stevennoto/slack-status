@@ -39,9 +39,9 @@ Specify `--text='some text' --emoji='emoji-name'` when setting status, and optio
 
     java -jar slack-status.jar --set-status --text='Lunch break' --emoji='sandwich' --expires='1pm'
 
-Specify `--channel-id='Slack channel ID' --start='date/time' --end='date/time'` when getting stats:
+Specify `--channel-id='Slack channel ID' --start='date/time' --end='date/time'` when getting stats, and optionally `--split-by='week|month'`:
 
-    java -jar slack-status.jar --get-channel-stats --channel-id='CXYZ123' --start='January 1, 2022 0:00' --end='January 31, 2022 23:59'
+    java -jar slack-status.jar --get-channel-stats --channel-id='CXYZ123' --start='January 1, 2022 0:00' --end='January 31, 2022 23:59' --split-by='week'
 
 [Natty](https://github.com/joestelmach/natty) is used for natural language date parsing, so expressions like 
 "tomorrow morning" or "wednesday at 5pm" will be recognized for date/time arguments.
