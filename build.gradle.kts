@@ -19,6 +19,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter:2.7.5")
 	implementation("com.slack.api:slack-api-client:1.26.1")
 	implementation("com.joestelmach:natty:0.13")
+//	implementation("com.google.code.gson:gson:2.8.4")
 }
 
 tasks.withType<KotlinCompile> {

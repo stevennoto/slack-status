@@ -1,6 +1,7 @@
 package com.simplyautomatic.slack.status
 
 
+import com.google.gson.Gson
 import com.joestelmach.natty.Parser
 import com.slack.api.Slack
 import com.slack.api.methods.MethodsClient
@@ -89,6 +90,7 @@ class SlackStatusApplication : ApplicationRunner {
 			}
 		} catch (e: Exception) {
 			println("Error: ${e.message}")
+e.printStackTrace()
 			exitProcess(1)
 		}
 
@@ -109,6 +111,30 @@ class SlackStatusApplication : ApplicationRunner {
 			}
 		}
 	}
+
+//	fun median(list: List<Double>): Double {
+//		return list.sorted().let {
+//			if (it.size % 2 == 0)
+//				(it[it.size / 2] + it[(it.size - 1) / 2]) / 2
+//			else
+//				it[it.size / 2]
+//		}
+//	}
+
+//					println("median " + median(listOf(1.0, 2.0)))
+//					println("median " + median(listOf(1.0, 3.0, 2.0)))
+//					println("outlier " + removeOutliers(listOf(1.0, 3.0, 2.0)))
+//					println("outlier " + removeOutliers(listOf(1.0, 3.0, 2.0, 2.0, 2.0, 2.0, 82.5)))
+//	fun removeOutliers(nums: List<Double>) : List<Double> {
+//		val first = nums.subList(0, (nums.size + 1) / 2)
+//		val second = nums.subList((nums.size + 1) / 2, nums.size)
+//		val quartile1: Double = median(first)
+//		val quartile3: Double = median(second)
+//		val iqr = quartile3 - quartile1
+//		val lowerFence = quartile1 - 1.5 * iqr
+//		val upperFence = quartile3 + 1.5 * iqr
+//		return nums.filter { it >= lowerFence && it <= upperFence }.toMutableList()
+//	}
 
 	fun getMode(args: List<String>?): Mode {
 		if (args == null || args.contains("usage") || args.contains("help")) return Mode.USAGE
@@ -212,14 +238,39 @@ class SlackStatusApplication : ApplicationRunner {
 
 	fun printChannelStats(stats: List<MessageStats>) {
 		println("Period,Num Messages,Num Threads,Min Thread Length,Max Thread Length,Avg Thread Length,Avg Thread Users")
+//TODO do we need to sort?
 		stats.forEach {
 			val minThreadLength = it.threadsStats.minOfOrNull { it.numMessages }
 			val maxThreadLength = it.threadsStats.maxOfOrNull { it.numMessages }
 			val avgThreadLength = String.format("%.2f", it.threadsStats.map { it.numMessages }.average())
+//			val avgThreadLengthNoOutliers = String.format("%.2f", removeOutliers(it.threadsNumMessages.map { it.toDouble() }).average())
 			val avgThreadUsers = String.format("%.2f", it.threadsStats.map { it.numUsers }.average())
 			println("${it.periodName},${it.numMessages},${it.numThreads},${minThreadLength},${maxThreadLength},${avgThreadLength},${avgThreadUsers}")
+//			|${it.keywords.toSortedMap()}""")
 		}
 	}
+
+//	fun getChannelIdByName(apiToken: String?, channelName: String): String {
+////					ConversationsListResponse conversationsList(ConversationsListRequest req) throws IOException, SlackApiException;
+////					ConversationsListResponse conversationsList(RequestConfigurator<ConversationsListRequest.ConversationsListRequestBuilder> req) throws IOException, SlackApiException;
+////					ConversationsHistoryResponse conversationsHistory(ConversationsHistoryRequest req) throws IOException, SlackApiException;
+////					ConversationsHistoryResponse conversationsHistory(RequestConfigurator<ConversationsHistoryRequest.ConversationsHistoryRequestBuilder> req) throws IOException, SlackApiException;
+//
+//
+//		val client = getSlackClient(apiToken)
+//		val request = ConversationsListRequest.builder().build()
+//// TODO QQQ where to specify search name
+//		request.channelNameOrSomething = channelName
+//		request.isExcludeArchived = false
+//		val response = client.conversationsList(request)
+//		if (!response.isOk) throw Exception("Slack API returned error ${response.error ?: response.warning}")
+//// TODO QQQ how to get one channel out, throw excep if none
+////					response2.channels.forEach {
+////						println(it.id + ": " + it.name)
+////					}
+////					println(response2.channels)
+//		return response.channels
+//	}
 }
 
 fun main(args: Array<String>) {

@@ -12,8 +12,8 @@ This allows the app to take actions on your behalf. User token strings begin wit
 
 To create a user token, first create a Slack app, optionally [following this tutorial](https://api.slack.com/tutorials/tracks/getting-a-token). 
 Then, find you app at https://api.slack.com/apps/ and click "OAuth & Permissions." Look under "User Token Scopes" and 
-add scopes for `users.profile:read` and `users.profile:write`. Then reinstall the app when prompted, which will 
-regenerate tokens. Then copy your "User OAuth Token" from the page.
+add scopes for `users.profile:read`, `users.profile:write`, `channels:history`, and `channels:read`. Then reinstall the 
+app when prompted, which will regenerate tokens. Then copy your "User OAuth Token" from the page.
 
 You can then specify your token in an environment variable named `$SLACK_API_TOKEN` or with a `token` argument.
 
@@ -56,3 +56,17 @@ Specify `--channel-id='Slack channel ID' --start='date/time' --end='date/time'` 
 - [x] Add setting of expiration date, with shortcuts like "end of day"
 - [ ] Add saving/retrieving template statuses
 - [ ] Decide whether to keep Spring dependencies
+
+Expansion PR ideas
+
+- [x] Improve setup info and usage
+- [x] New mode: get channel stats - ConversationsHistoryRequest
+      java -jar slack-status.jar --get-channel-stats --channel-id='CXYZ123' --start='September 1, 2022' --end='September 30, 2022'
+	  note new scopes
+- [X] Handle pagination
+- [X] add splitting by month/week
+- [ ] New function: search channel by name not id. but need to fetch all channels wah wah
+- [ ] Keywords
+- [ ] Outlier removal
+- [ ] csv or tsv choice. no?
+- [ ] Save to csv/tsv file? no?
